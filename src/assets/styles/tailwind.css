@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 自定义组件样式 */
+@layer components {
+  /* 仪表盘页面特定样式 */
+  .dashboard-shadow {
+    @apply shadow-custom;
+  }
+
+  /* 金额卡片样式 */
+  .amount-card {
+    @apply flex flex-col items-center p-2.5 rounded-lg flex-1;
+  }
+
+  .amount-label {
+    @apply text-sm text-text-disabled mb-2 whitespace-nowrap;
+  }
+
+  .amount-value {
+    @apply text-2xl font-medium;
+  }
+}
+
