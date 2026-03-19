@@ -1,1 +1,0 @@
-import{C as e}from"./index-BR67wy3o.js";const o=t=>e.get("/front/h5/userList",t),n=t=>e.get(`/front/h5/userDetail?uid=${t}`),s=t=>e.post("/front/add",t),a=t=>e.post("/front/h5/edit",t),u=t=>e.get("/front/h5/getAssignCreditDetail",t),c=t=>e.post("/front/h5/updateCredit",t);export{n as a,s as b,u as c,c as d,a as e,o as g};

@@ -92,3 +92,8 @@ export const getOrderCount = () => {
   return http.get('/front/xa/order/h5/orderCount')
 }
 
+// 取消订单
+export const cancelOrder = (orderId: string) => {
+  return http.post(`/front/xa/order/cancel?orderId=${orderId}`)
+}
+

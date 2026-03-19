@@ -56,10 +56,10 @@
           </div>
         </template>
 
-        <template #acceptanceDate="{ row }">
+        <template #finishDate="{ row }">
           <div class="flex flex-col text-sm">
-            <template v-if="row.acceptanceDate">
-              <span class="text-[#333]">{{ row.acceptanceDate }}</span>
+            <template v-if="row.finishDate">
+              <span class="text-[#333]">{{ row.finishDate }}</span>
             </template>
             <span v-else class="text-gray-400">-</span>
           </div>
@@ -83,6 +83,19 @@
           <span class="text-sm text-red-500">¥{{ formatAmount(row.totalPrice) }}</span>
         </template>
 
+        <template #payMsg="{ row }">
+          <div class="inline-flex items-center justify-center px-2 py-0.5 rounded text-xs"
+            :style="row.paid ? { color: '#059669', backgroundColor: '#dcfce7' } : { color: '#ef4444', backgroundColor: '#fee2e2' }">
+            {{ row.payMsg || (row.paid ? '已支付' : '未支付') }}
+          </div>
+        </template>
+
+        <template #settleAmount="{ row }">
+          <span class="text-sm text-red-500" v-if="row.settleAmount != null">¥{{ formatAmount(row.settleAmount)
+            }}</span>
+          <span v-else class="text-gray-400">-</span>
+        </template>
+
         <template #operation="{ row }">
           <el-button size="small" @click="viewOrder(row)"
             class="!rounded !border-gray-200 !text-gray-600 hover:!text-blue-500 hover:!border-blue-500">
@@ -95,7 +108,7 @@
       </CommonTable>
     </div>
 
-    <OrderDetailModal v-model:visible="showOrderDetail" :orderId="selectedOrderId" />
+    <OrderDetailModal v-model:visible="showOrderDetail" :orderId="selectedOrderId" @cancelled="getOrderListData" />
   </div>
 </template>
 
@@ -139,6 +152,11 @@ interface Order {
   payPrice?: number
   payMethod?: string
   acceptanceDate?: string
+  finishDate?: string
+  paid?: boolean
+  payMsg?: string
+  remark?: string
+  settleAmount?: number
 }
 
 interface ProjectItem {
@@ -205,13 +223,16 @@ const columns: ColumnConfig[] = [
   { prop: 'projectName', label: '业务类型', width: 120 },
   { prop: 'createTime', label: '下单时间', width: 140, slot: 'createTime' },
   { prop: 'orderUserName', label: '下单人', width: 140 },
-  { prop: 'acceptanceDate', label: '完成时间', width: 140, slot: 'acceptanceDate' },
+  { prop: 'finishDate', label: '完成时间', width: 140, slot: 'finishDate' },
   { prop: 'status', label: '订单状态', width: 100, align: 'center', slot: 'status' },
   { prop: 'userPhone', label: '联系电话', width: 130, slot: 'contact' },
   { prop: 'userAddress', label: '地址', minWidth: 150, showOverflowTooltip: true },
   { prop: 'itemName', label: '项目名称', width: 100, },
   { prop: 'itemCode', label: '项目编号', width: 100, },
   { prop: 'totalPrice', label: '订单总额', width: 100, align: 'right', slot: 'totalPrice' },
+  { prop: 'payMsg', label: '支付情况', width: 100, slot: 'payMsg' },
+  { prop: 'remark', label: '订单备注', width: 120, showOverflowTooltip: true },
+  { prop: 'settleAmount', label: '结算金额', width: 100, align: 'right', slot: 'settleAmount' },
   { label: '操作', width: 80, align: 'center', slot: 'operation' },
 ]
 
@@ -392,11 +413,18 @@ const orderExportColumns: ExportColumn[] = [
   { prop: 'orderId', label: '订单号' },
   { prop: 'projectName', label: '业务类型' },
   { prop: 'createTime', label: '下单时间' },
-  { prop: 'installTime', label: '安装时间' },
+  { prop: 'orderUserName', label: '下单人' },
+  { prop: 'finishDate', label: '完成时间' },
   { prop: 'orderStatus', label: '订单状态' },
+  { prop: 'realName', label: '联系人' },
   { prop: 'userPhone', label: '联系电话' },
   { prop: 'userAddress', label: '地址' },
-  { prop: 'totalPrice', label: '订单总额', formatter: (v) => `¥${Number(v || 0).toFixed(2)}` }
+  { prop: 'itemName', label: '项目名称' },
+  { prop: 'itemCode', label: '项目编号' },
+  { prop: 'totalPrice', label: '订单总额', formatter: (v) => `¥${Number(v || 0).toFixed(2)}` },
+  { prop: 'payMsg', label: '支付情况' },
+  { prop: 'remark', label: '订单备注' },
+  { prop: 'settleAmount', label: '结算金额', formatter: (v) => v != null ? `¥${Number(v || 0).toFixed(2)}` : '-' },
 ]
 
 const handleExport = async () => {

@@ -205,15 +205,21 @@
         </div>
       </div>
     </div>
+    <template #footer v-if="showCancelButton">
+      <div class="flex justify-end px-4 pb-2">
+        <el-button type="danger" @click="handleCancel">取消订单</el-button>
+      </div>
+    </template>
   </el-dialog>
   <Track v-model:visible="TrackdialogVisible" :orderId="orderData?.orderId" />
   <Deliveryinfo v-model:visible="deliveryinfodialogVisible" :orderId="orderData?.id" />
 </template>
 
 <script setup lang="ts">
-import { getOrderDetail, getOrderWorkflow } from '@/api'
+import { getOrderDetail, getOrderWorkflow, cancelOrder } from '@/api'
 import { ref, watch, computed } from 'vue'
 import { ArrowUp, ArrowDown } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import Track from './Track.vue'
 
 import { useLoadingStore } from '@/stores/loading'
@@ -385,6 +391,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   'update:visible': [value: boolean]
+  'cancelled': []
 }>()
 
 const dialogVisible = ref(props.visible)
@@ -487,6 +494,35 @@ const handleViewLogistics = async () => {
 }
 const handleViewDelivey = async () => {
   deliveryinfodialogVisible.value = true
+}
+
+// 只有待付款(status=0)才能取消订单
+const showCancelButton = computed(() => {
+  return Number(orderData.value?.status) === 0
+})
+
+const handleCancel = async () => {
+  if (!orderData.value?.orderId) return
+  try {
+    await ElMessageBox.confirm('确定要取消该订单吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    const res: any = await cancelOrder(orderData.value.orderId)
+    if (res.code === '00000') {
+      ElMessage.success('订单已取消')
+      dialogVisible.value = false
+      emit('update:visible', false)
+      emit('cancelled')
+    } else {
+      ElMessage.error(res.message || '取消订单失败')
+    }
+  } catch (e: any) {
+    if (e !== 'cancel') {
+      ElMessage.error('取消订单失败，请重试')
+    }
+  }
 }
 </script>
 

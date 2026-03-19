@@ -1,1 +1,0 @@
-import{C as t}from"./index-BR67wy3o.js";const s=e=>t.post("/file/upload",e,{headers:{"Content-Type":"multipart/form-data"}}),o=()=>t.get("/front/city/list"),a=()=>t.get("/dict/list?dictTypeCode=CourierCompany"),i=e=>t.get("/app/article/query",e);export{a,i as b,o as g,s as u};
