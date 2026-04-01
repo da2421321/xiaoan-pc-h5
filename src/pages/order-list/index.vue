@@ -92,7 +92,7 @@
 
         <template #settleAmount="{ row }">
           <span class="text-sm text-red-500" v-if="row.settleAmount != null">¥{{ formatAmount(row.settleAmount)
-            }}</span>
+          }}</span>
           <span v-else class="text-gray-400">-</span>
         </template>
 
@@ -233,7 +233,7 @@ const columns: ColumnConfig[] = [
   { prop: 'payMsg', label: '支付情况', width: 100, slot: 'payMsg' },
   { prop: 'remark', label: '订单备注', width: 120, showOverflowTooltip: true },
   { prop: 'settleAmount', label: '结算金额', width: 100, align: 'right', slot: 'settleAmount' },
-  { label: '操作', width: 80, align: 'center', slot: 'operation' },
+  { label: '操作', width: 80, align: 'center', slot: 'operation', fixed: 'right' },
 ]
 
 const getOrderListData = async () => {
