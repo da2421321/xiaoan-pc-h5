@@ -57,15 +57,18 @@
         <div class="w-full flex items-center px-2 py-6">
           <el-checkbox v-model="remember" class="custom-checkbox">
             <span class="text-[rgba(102,102,102,1)]">我已阅读并同意</span>
-            <span class="text-[rgba(49, 125, 254, 1)] cursor-pointer agreement-link"
+            <span class="cursor-pointer agreement-link"
               @click.prevent.stop="openAgreement('user')">《用户协议》</span>
             <span class="text-[rgba(102,102,102,1)]">和</span>
-            <span class="text-[rgba(49, 125, 254, 1)] cursor-pointer agreement-link"
+            <span class="cursor-pointer agreement-link"
               @click.prevent.stop="openAgreement('privacy')">《隐私协议》</span>
           </el-checkbox>
         </div>
         <div class="w-full">
           <el-button class="w-full h-[50px] text-[16px]" :loading="isLoggingIn" @click="handleLogin">登录</el-button>
+        </div>
+        <div class="w-full text-right mt-3">
+          <span class="register-link cursor-pointer text-[14px]" @click="goToRegister">没有账号？去注册</span>
         </div>
       </div>
     </div>
@@ -137,6 +140,10 @@ const openAgreement = (type: 'user' | 'privacy') => {
   showAgreement.value = true
 }
 
+const goToRegister = () => {
+  router.push('/register')
+}
+
 // 手机号输入只保留数字并限制为 11 位
 const onPhoneInput = () => {
   phone.value = (phone.value || '').replace(/\D/g, '').slice(0, 11)
@@ -145,6 +152,10 @@ const onPhoneInput = () => {
 // 获取验证码
 const getCaptcha = async () => {
   if (typeof countdown.value === 'number') {
+    return
+  }
+  if (!remember.value) {
+    ElMessage.warning('请先阅读并同意用户协议和隐私协议')
     return
   }
   if (!phone.value) {
@@ -312,11 +323,22 @@ const handleLogin = async () => {
 
 /* 协议链接下划线样式 */
 .agreement-link {
+  color: rgba(49, 125, 254, 1) !important;
   text-decoration: none;
 }
 
-.agreement-link:hover {
+.agreement-link:hover,
+.agreement-link:active,
+.agreement-link:visited {
   color: rgba(49, 125, 254, 1);
+}
+
+.register-link {
+  color: rgba(49, 125, 254, 1);
+}
+
+.register-link:hover {
+  color: rgba(49, 125, 254, 0.8);
 }
 
 /* 登录方式 Tab 样式 */

@@ -2,6 +2,7 @@
  * 通用接口 - 文件上传、地址、字典等
  */
 import http from '@/utils/request'
+import type { Response } from '@/utils/request'
 
 // 文件上传
 export const uploadFile = (data: FormData) => {
@@ -25,4 +26,27 @@ export const getDistrictList = () => {
 // 获取协议内容
 export const getAgreement = (data: Record<string, unknown>) => {
   return http.get('/app/article/query', data)
+}
+
+export interface BankBaseItem {
+  id: string
+  bankCode: string
+  fullName: string
+  shortName: string
+  status: string
+}
+
+export interface BankBasePageData {
+  pageNo: number
+  pageSize: number
+  totalPage: number
+  totalRows: number
+  rows: BankBaseItem[]
+}
+
+export const getBankBasePage = (params: { pageNumber: number; pageSize: number }) => {
+  return http.get<Response<BankBasePageData> & { success?: boolean }>(
+    '/admin/finance/bankbase/page',
+    params,
+  )
 }

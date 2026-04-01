@@ -73,6 +73,12 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/pages/login/index.vue'),
     meta: { title: '登录' },
   },
+  {
+    path: '/register',
+    name: 'register',
+    component: () => import('@/pages/register/index.vue'),
+    meta: { title: '注册' },
+  },
 ]
 
 const router = createRouter({
@@ -93,6 +99,7 @@ interface UserInfoResponse {
     account: string
     isCredit: boolean
     isAdmin: number // 是否主账号: 0-子账号, 1-主账号
+    bodyId: string
     bodyInfo?: {
       name: string
       address: string
@@ -100,12 +107,12 @@ interface UserInfoResponse {
   }
 }
 
-// 路由守卫 - 自动获取用户信息
+// Route guard - auto fetch user info
 router.beforeEach(async (to, _from, next) => {
   const token = localStorage.getItem('token')
 
-  // 如果去登录页，直接放行
-  if (to.path === '/login') {
+  // Allow login and register pages without token
+  if (to.path === '/login' || to.path === '/register') {
     next()
     return
   }
@@ -144,4 +151,3 @@ router.beforeEach(async (to, _from, next) => {
 })
 
 export default router
-
