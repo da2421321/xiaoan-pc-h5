@@ -67,3 +67,25 @@ export interface ChangePasswordParams {
 export const changePassword = (data: ChangePasswordParams) => {
   return http.post('/front/member/resetPwd', data)
 }
+
+// 企业注册请求参数
+export interface RegisterCustomerParams {
+  enterpriseName: string
+  enterpriseAbbreviation: string
+  unifiedSocialCreditCode: string
+  businessLicensePhoto: string
+  captcha: string
+  legalPerson: string
+  legalPersonIdCardNumber: string
+  phoneNumber: string
+  password: string
+  email: string
+  companyAddress: string
+  corporateAccountNumber: string
+  corporateAccountBank: string
+}
+
+// 企业注册
+export const registerCustomer = (data: RegisterCustomerParams) => {
+  return http.post<Response<null>>('/front/register/customer', data)
+}

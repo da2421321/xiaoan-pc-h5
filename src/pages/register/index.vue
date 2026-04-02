@@ -3,14 +3,8 @@
     <div class="register-card">
       <h1 class="register-title">欢迎注册</h1>
 
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="currentRules"
-        label-position="top"
-        require-asterisk-position="right"
-        :class="['register-form', step === 2 ? 'register-form-step2' : '']"
-      >
+      <el-form ref="formRef" :model="form" :rules="currentRules" label-position="top" require-asterisk-position="right"
+        :class="['register-form', 'register-form-step2']">
         <div v-if="step === 1" class="form-grid">
           <el-form-item label="企业名称" prop="enterpriseName" class="form-item-full">
             <el-input v-model="form.enterpriseName" placeholder="请输入企业名称" />
@@ -25,13 +19,8 @@
 
           <el-form-item label="营业执照照片" prop="licenseFile" class="form-item-full" required>
             <div class="license-upload" @click="openLicensePicker">
-              <input
-                ref="licenseInputRef"
-                type="file"
-                accept=".jpg,.jpeg,.png,.pdf"
-                class="hidden-input"
-                @change="handleLicenseSelect"
-              />
+              <input ref="licenseInputRef" type="file" accept=".jpg,.jpeg,.png,.pdf" class="hidden-input"
+                @change="handleLicenseSelect" />
               <el-icon class="upload-icon">
                 <UploadFilled />
               </el-icon>
@@ -43,7 +32,7 @@
           </el-form-item>
         </div>
 
-        <div v-else class="form-grid">
+        <div v-else-if="step === 2" class="form-grid">
           <el-form-item label="法人" prop="legalPerson">
             <el-input v-model="form.legalPerson" placeholder="请输入法人姓名" />
           </el-form-item>
@@ -51,17 +40,8 @@
             <el-input v-model="form.legalIdCard" placeholder="请输入法人身份证号码" />
           </el-form-item>
 
-          <el-form-item label="手机号" prop="mobile">
-            <el-input v-model="form.mobile" placeholder="请输入手机号" />
-          </el-form-item>
-          <el-form-item label="邮箱" prop="email">
+          <el-form-item label="邮箱" prop="email" class="form-item-full">
             <el-input v-model="form.email" placeholder="请输入邮箱" />
-          </el-form-item>
-          <el-form-item label="密码" prop="password">
-            <el-input v-model="form.password" type="password" show-password placeholder="请输入密码" />
-          </el-form-item>
-          <el-form-item label="确认密码" prop="confirmPassword">
-            <el-input v-model="form.confirmPassword" type="password" show-password placeholder="请输入确认密码" />
           </el-form-item>
 
           <el-form-item label="公司地址" prop="companyAddress" class="form-item-full">
@@ -79,24 +59,51 @@
             </el-select>
           </el-form-item>
         </div>
+
+        <div v-else class="form-grid">
+          <el-form-item label="设置密码" prop="password" class="form-item-full">
+            <el-input v-model="form.password" type="password" show-password placeholder="请输入密码" />
+          </el-form-item>
+          <el-form-item label="再次输入密码" prop="confirmPassword" class="form-item-full">
+            <el-input v-model="form.confirmPassword" type="password" show-password placeholder="请再次输入密码" />
+          </el-form-item>
+
+          <el-form-item label="手机号" prop="mobile">
+            <el-input v-model="form.mobile" placeholder="请输入手机号码，作为登录账号" maxlength="11" class="phone-input-with-code">
+              <template #suffix>
+                <span class="captcha-action" :class="{ 'is-disabled': typeof countdown === 'number' }"
+                  @click="handleSendCode">
+                  {{ typeof countdown === 'number' ? `${countdown}s` : countdown }}
+                </span>
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item label="验证码" prop="captchaCode">
+            <el-input v-model="form.captchaCode" placeholder="请输入验证码" maxlength="6" />
+          </el-form-item>
+        </div>
       </el-form>
 
-      <div class="action-row" :class="{ 'double-actions': step === 2 }">
-        <el-button v-if="step === 2" class="prev-btn" @click="goPrevStep">上一步</el-button>
-        <el-button class="next-btn" type="primary" @click="step === 1 ? goNextStep() : handleSubmit()">
-          {{ step === 1 ? '下一步' : '提交' }}
-        </el-button>
+      <div class="action-row" :class="{ 'double-actions': step !== 1 }">
+        <el-button v-if="step !== 1" class="prev-btn" :disabled="submitLoading" @click="goPrevStep">上一步</el-button>
+        <el-button class="next-btn" type="primary" :loading="submitLoading"
+          @click="step < 3 ? goNextStep() : handleSubmit()">
+          {{ step < 3 ? '下一步' : '提交' }} </el-button>
       </div>
     </div>
+
+    <Loading :visible="successDialogVisible" text="注册成功" :show-spinner="false" text-class="register-success-text" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { getBankBasePage } from '@/api'
+import { getBankBasePage, registerCustomer, sendCode, uploadFileByUnToken } from '@/api'
+import Loading from '@/components/modals/loading.vue'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 defineOptions({
   name: 'RegisterPage',
@@ -112,6 +119,7 @@ interface RegisterForm {
   mobile: string
   password: string
   confirmPassword: string
+  captchaCode: string
   email: string
   companyAddress: string
   bankAccount: string
@@ -120,7 +128,13 @@ interface RegisterForm {
 
 const formRef = ref<FormInstance>()
 const licenseInputRef = ref<HTMLInputElement | null>(null)
-const step = ref<1 | 2>(1)
+const step = ref<1 | 2 | 3>(1)
+const submitLoading = ref(false)
+const successDialogVisible = ref(false)
+const router = useRouter()
+const countdown = ref<string | number>('获取验证码')
+let timer: ReturnType<typeof setInterval> | null = null
+let successRedirectTimer: ReturnType<typeof setTimeout> | null = null
 
 const defaultBankOptions = ['中国工商银行', '中国农业银行', '中国银行', '中国建设银行', '交通银行']
 const bankOptions = ref<string[]>([...defaultBankOptions])
@@ -135,6 +149,7 @@ const form = ref<RegisterForm>({
   mobile: '',
   password: '',
   confirmPassword: '',
+  captchaCode: '',
   email: '',
   companyAddress: '',
   bankAccount: '',
@@ -162,10 +177,16 @@ const stepOneRules: FormRules<RegisterForm> = {
 const stepTwoRules: FormRules<RegisterForm> = {
   legalPerson: [{ required: true, message: '请输入法人姓名', trigger: 'blur' }],
   legalIdCard: [{ required: true, message: '请输入法人身份证号码', trigger: 'blur' }],
-  mobile: [
-    { required: true, message: '请输入手机号码，作为登录账号', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' },
+  email: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
   ],
+  companyAddress: [{ required: true, message: '请输入公司地址', trigger: 'blur' }],
+  bankAccount: [{ required: true, message: '请输入对公账户号', trigger: 'blur' }],
+  bankName: [{ required: true, message: '请选择对公账户开户行', trigger: 'change' }],
+}
+
+const stepThreeRules: FormRules<RegisterForm> = {
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 6, message: '密码长度不能少于6位', trigger: 'blur' },
@@ -183,16 +204,18 @@ const stepTwoRules: FormRules<RegisterForm> = {
       trigger: 'blur',
     },
   ],
-  email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
+  mobile: [
+    { required: true, message: '请输入手机号码', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' },
   ],
-  companyAddress: [{ required: true, message: '请输入公司地址', trigger: 'blur' }],
-  bankAccount: [{ required: true, message: '请输入对公账户号', trigger: 'blur' }],
-  bankName: [{ required: true, message: '请选择对公账户开户行', trigger: 'change' }],
+  captchaCode: [{ required: true, message: '请输入验证码', trigger: 'blur' }],
 }
 
-const currentRules = computed(() => (step.value === 1 ? stepOneRules : stepTwoRules))
+const currentRules = computed(() => {
+  if (step.value === 1) return stepOneRules
+  if (step.value === 2) return stepTwoRules
+  return stepThreeRules
+})
 
 const validateCurrentStep = async () => {
   if (!formRef.value) return false
@@ -235,19 +258,142 @@ const handleLicenseSelect = (event: Event) => {
 const goNextStep = async () => {
   const pass = await validateCurrentStep()
   if (!pass) return
-  step.value = 2
+  if (step.value === 1) {
+    step.value = 2
+  } else if (step.value === 2) {
+    step.value = 3
+  }
   formRef.value?.clearValidate()
 }
 
 const goPrevStep = () => {
-  step.value = 1
+  if (step.value === 3) {
+    step.value = 2
+  } else if (step.value === 2) {
+    step.value = 1
+  }
   formRef.value?.clearValidate()
 }
 
+const clearCountdown = () => {
+  if (!timer) return
+  clearInterval(timer)
+  timer = null
+}
+
+const clearSuccessRedirectTimer = () => {
+  if (!successRedirectTimer) return
+  clearTimeout(successRedirectTimer)
+  successRedirectTimer = null
+}
+
+const handleSendCode = async () => {
+  if (typeof countdown.value === 'number') return
+  if (!/^1[3-9]\d{9}$/.test(form.value.mobile)) {
+    ElMessage.warning('请输入正确的手机号')
+    return
+  }
+
+  try {
+    const res = await sendCode(form.value.mobile)
+    if (res.code !== '200' && res.code !== 200) {
+      ElMessage.error(res.message || '验证码发送失败')
+      return
+    }
+
+    ElMessage.success('验证码发送成功')
+    countdown.value = 60
+    clearCountdown()
+    timer = setInterval(() => {
+      if (typeof countdown.value !== 'number') return
+      countdown.value -= 1
+      if (countdown.value <= 0) {
+        countdown.value = '获取验证码'
+        clearCountdown()
+      }
+    }, 1000)
+  } catch {
+    ElMessage.error('验证码发送失败，请稍后重试')
+  }
+}
+
+const isRequestSuccess = (res: { code?: number | string; success?: boolean }) => {
+  return (
+    res?.success === true ||
+    res?.code === 0 ||
+    res?.code === '0' ||
+    res?.code === '00000' ||
+    res?.code === 200 ||
+    res?.code === '200'
+  )
+}
+
+const uploadLicenseFile = async (file: File) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('secretFlag', 'N')
+  formData.append('fileLocation', '1')
+
+  const uploadRes = await uploadFileByUnToken(formData)
+  const fileUrl = (uploadRes as { data?: { fileUrl?: string } })?.data?.fileUrl || ''
+  if (!fileUrl) {
+    throw new Error('营业执照上传失败，请重试')
+  }
+  return fileUrl
+}
+
+const showRegisterSuccessDialog = () => {
+  successDialogVisible.value = true
+  clearSuccessRedirectTimer()
+  successRedirectTimer = setTimeout(() => {
+    successDialogVisible.value = false
+    router.push('/login')
+  }, 2000)
+}
+
 const handleSubmit = async () => {
+  if (submitLoading.value) return
+
   const pass = await validateCurrentStep()
   if (!pass) return
-  ElMessage.success('注册信息已提交')
+
+  if (!form.value.licenseFile) {
+    ElMessage.warning('请上传营业执照照片')
+    return
+  }
+
+  submitLoading.value = true
+  try {
+    const businessLicensePhoto = await uploadLicenseFile(form.value.licenseFile)
+
+    const res = await registerCustomer({
+      enterpriseName: form.value.enterpriseName,
+      enterpriseAbbreviation: form.value.enterpriseShortName,
+      unifiedSocialCreditCode: form.value.creditCode,
+      businessLicensePhoto,
+      captcha: form.value.captchaCode,
+      legalPerson: form.value.legalPerson,
+      legalPersonIdCardNumber: form.value.legalIdCard,
+      phoneNumber: form.value.mobile,
+      password: form.value.password,
+      email: form.value.email,
+      companyAddress: form.value.companyAddress,
+      corporateAccountNumber: form.value.bankAccount,
+      corporateAccountBank: form.value.bankName,
+    })
+
+    if (!isRequestSuccess(res as { code?: number | string; success?: boolean })) {
+      ElMessage.error(res?.message || '注册失败，请稍后重试')
+      return
+    }
+
+    showRegisterSuccessDialog()
+  } catch (error) {
+    const message = (error as { message?: string })?.message || '注册失败，请稍后重试'
+    ElMessage.error(message)
+  } finally {
+    submitLoading.value = false
+  }
 }
 
 const fetchBankOptions = async () => {
@@ -256,6 +402,7 @@ const fetchBankOptions = async () => {
     const isSuccess = res?.success === true || res?.code === '00000' || res?.code === 0
     if (!isSuccess) {
       ElMessage.warning(res?.message || '获取开户行列表失败，已使用默认列表')
+      bankOptions.value = [...defaultBankOptions]
       return
     }
 
@@ -268,19 +415,20 @@ const fetchBankOptions = async () => {
       ),
     )
 
-    if (loadedOptions.length > 0) {
-      bankOptions.value = loadedOptions
-      return
-    }
-
-    ElMessage.warning('开户行数据为空，已使用默认列表')
+    bankOptions.value = loadedOptions.length > 0 ? loadedOptions : [...defaultBankOptions]
   } catch {
     ElMessage.warning('获取开户行列表失败，已使用默认列表')
+    bankOptions.value = [...defaultBankOptions]
   }
 }
 
 onMounted(() => {
   fetchBankOptions()
+})
+
+onBeforeUnmount(() => {
+  clearCountdown()
+  clearSuccessRedirectTimer()
 })
 </script>
 
@@ -298,15 +446,16 @@ onMounted(() => {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background: url('@/assets/images/back.png') no-repeat top center;
+  background: url('@/assets/images/backx.png') no-repeat top center;
   background-size: 100% 100%;
 }
 
 .register-card {
+  position: relative;
   max-width: 980px;
   min-height: 560px;
   margin: 0 auto;
-  padding: 28px 116px 30px;
+  padding: 28px 116px 48px;
   border: 1px solid rgba(214, 223, 237, 1);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.92);
@@ -328,6 +477,8 @@ onMounted(() => {
   margin-top: 16px;
   margin-left: auto;
   margin-right: auto;
+  padding-bottom: 90px;
+  box-sizing: border-box;
 }
 
 .register-form-step2 {
@@ -382,16 +533,19 @@ onMounted(() => {
 
 .form-divider {
   grid-column: 1 / -1;
-  height: 1px;
+  height: 2px;
   border: 0;
   background: repeating-linear-gradient(to right,
-      rgba(214, 223, 237, 1) 0 16px,
-      transparent 16px 24px);
-  margin: 14px 0 22px;
+      rgba(214, 223, 237, 1) 0 7px,
+      transparent 7px 24px);
+  margin: 22px 0 30px;
 }
 
 .action-row {
-  margin-top: 24px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 28px;
   display: flex;
   justify-content: center;
 }
@@ -403,7 +557,7 @@ onMounted(() => {
 .action-row.double-actions {
   width: 100%;
   max-width: 680px;
-  margin: 26px auto 0;
+  margin: 0 auto;
 }
 
 .action-row.double-actions .prev-btn {
@@ -473,6 +627,29 @@ onMounted(() => {
   border-color: rgba(49, 125, 254, 1);
 }
 
+:deep(.is-local .loading-text.register-success-text) {
+  font-size: 16px;
+}
+
+.captcha-action {
+  color: rgba(49, 125, 254, 1);
+  user-select: none;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 14px;
+  margin-right: 4px;
+}
+
+.captcha-action.is-disabled {
+  color: rgba(49, 125, 254, 1);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+:deep(.phone-input-with-code .el-input__inner) {
+  padding-right: 60px;
+}
+
 @media (max-width: 1024px) {
   .register-card {
     padding: 24px 28px;
@@ -486,7 +663,7 @@ onMounted(() => {
 
   .register-card {
     min-height: auto;
-    padding: 20px 16px;
+    padding: 20px 16px 30px;
   }
 
   .register-title {
@@ -496,6 +673,7 @@ onMounted(() => {
 
   .register-form {
     max-width: none;
+    padding-bottom: 108px;
   }
 
   .form-grid {
@@ -512,8 +690,18 @@ onMounted(() => {
   }
 
   .action-row {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 20px;
     flex-direction: column;
     gap: 10px;
+  }
+
+  .action-row.double-actions {
+    width: auto;
+    max-width: none;
+    margin: 0;
   }
 
   .prev-btn,

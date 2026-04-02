@@ -13,6 +13,14 @@ export const uploadFile = (data: FormData) => {
   })
 }
 
+export const uploadFileByUnToken = (data: FormData) => {
+  return http.post('/file/uploadByUnToken', data, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+}
+
 // 获取服务地址（城市列表）
 export const getServiceAddress = () => {
   return http.get('/front/city/list')

@@ -3,11 +3,11 @@
         <div class="loading-card" :class="{ 'loading-card-small': isLocal }">
             <div class="loading-body">
                 <div class="loading-content">
-                    <div class="loading-track"></div>
-                    <div class="loading-circle"></div>
+                    <div v-if="isSpinnerVisible" class="loading-track"></div>
+                    <div v-if="isSpinnerVisible" class="loading-circle"></div>
                     <img src="@/assets/images/avatar1.png" alt="loading" class="loading-avatar" />
                 </div>
-                <p class="loading-text">{{ loadingText }}</p>
+                <p class="loading-text" :class="props.textClass">{{ loadingText }}</p>
             </div>
         </div>
     </div>
@@ -21,9 +21,13 @@ import { computed, getCurrentInstance } from 'vue';
 interface Props {
     visible?: boolean
     text?: string
+    showSpinner?: boolean
+    textClass?: string
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+    showSpinner: true,
+})
 
 const loadingStore = useLoadingStore()
 const { visible: storeVisible, text: storeText } = storeToRefs(loadingStore)
@@ -39,6 +43,10 @@ const isVisible = computed(() => {
 
 const loadingText = computed(() => {
     return props.text || storeText.value
+})
+
+const isSpinnerVisible = computed(() => {
+    return props.showSpinner
 })
 
 const isLocal = computed(() => {
