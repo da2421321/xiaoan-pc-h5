@@ -72,8 +72,9 @@
             <div class="flex-1 p-3 text-gray-900 flex items-center">{{ orderData?.installTime || '-' }}</div>
             <div
               class="w-32  bg-[#f9f9f9] p-3 text-gray-500 flex items-center justify-end border-r border-gray-200 border-l border-gray-200 flex-shrink-0">
-              设备状态</div>
-            <div class="flex-1 p-3 text-gray-900 flex items-center">{{ equipmentType || '-' }}</div>
+              可开票金额</div>
+            <div class="flex-1 p-3 text-red-500 font-bold flex items-center">¥{{
+              formatAmount(orderData?.invoiceableAmount) }}</div>
           </div>
 
           <!-- Row 6 -->
@@ -106,6 +107,12 @@
             class="w-32  bg-[#f9f9f9] p-3 text-gray-500 flex items-center justify-end border-r border-gray-200 border-l border-gray-200 flex-shrink-0">
             项目编号</div>
           <div class="flex-1 p-3 text-gray-900 flex items-center">{{ orderData?.itemCode || '-' }}</div>
+        </div>
+        <div class="flex border-b border-gray-200">
+          <div
+            class="w-32  bg-[#f9f9f9] p-3 text-gray-500 flex items-center justify-end border-r border-gray-200 flex-shrink-0">
+            设备状态</div>
+          <div class="flex-1 p-3 text-gray-900 flex items-center">{{ equipmentType || '-' }}</div>
         </div>
         <div class="flex border-b border-gray-200">
           <div
@@ -303,6 +310,7 @@ interface ApiOrderDetail {
   basicPrice: number
   supplementPrice: number
   settlementPrice: number
+  invoiceableAmount: number
   unSettlementPrice: number
   proTotalPrice: number
   payPrice: number

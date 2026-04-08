@@ -230,6 +230,7 @@ const columns: ColumnConfig[] = [
   { prop: 'itemName', label: '项目名称', width: 100, },
   { prop: 'itemCode', label: '项目编号', width: 100, },
   { prop: 'totalPrice', label: '订单总额', width: 100, align: 'right', slot: 'totalPrice' },
+  { prop: 'invoiceableAmount', label: '可开票金额', width: 100, align: 'center' },
   { prop: 'payMsg', label: '支付情况', width: 100, slot: 'payMsg' },
   { prop: 'remark', label: '订单备注', width: 120, showOverflowTooltip: true },
   { prop: 'settleAmount', label: '结算金额', width: 100, align: 'right', slot: 'settleAmount' },
