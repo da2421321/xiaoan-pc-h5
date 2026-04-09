@@ -16,8 +16,6 @@ export interface CaptchaLoginParams {
 export interface PasswordLoginParams {
   account: string
   password: string
-  // isCustomer: boolean
-  // type: string
 }
 
 // 登录响应数据
@@ -58,14 +56,64 @@ export const getUserInfo = () => {
 
 // 修改密码请求参数
 export interface ChangePasswordParams {
-  account: string      // 登录手机号
-  password: string     // 新密码
-  oldPassword: string  // 原密码
+  account: string
+  password: string
+  oldPassword: string
 }
 
 // 修改密码
 export const changePassword = (data: ChangePasswordParams) => {
   return http.post('/front/member/resetPwd', data)
+}
+
+export interface EditMemberPersonInfoParams {
+  type?: string
+  name?: string
+  contactMan?: string
+  contactPhone?: string
+  contactEmail?: string
+  subName?: string
+  creditCode?: string
+  legalPerson?: string
+  cardNo?: string
+  license?: string
+  companyAddress?: string
+  corporateAccount?: string
+  corporateBank?: string
+}
+
+export interface EditMemberBodyParams {
+  id?: number
+  userRose?: string
+  type?: string
+  name?: string
+  personName?: string
+  personPhone?: string
+  personNumber?: string
+  relation?: string
+  contactMan?: string
+  contactPhone?: string
+  provinceId?: string
+  province?: string
+  cityId?: string
+  city?: string
+  areaId?: string
+  area?: string
+  mergerName?: string
+  address?: string
+}
+
+export interface EditMemberProfileParams {
+  uid?: number
+  userRose: string
+  avatar?: string
+  personInfo?: EditMemberPersonInfoParams
+  body?: EditMemberBodyParams
+}
+
+// 修改个人信息
+export const editMemberProfile = (data: EditMemberProfileParams) => {
+  return http.post<Response<null>>('/front/member/edit', data)
 }
 
 // 企业注册请求参数
