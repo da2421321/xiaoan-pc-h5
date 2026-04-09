@@ -6,6 +6,29 @@
       <el-form ref="formRef" :model="form" :rules="currentRules" label-position="top" require-asterisk-position="right"
         :class="['register-form', 'register-form-step2']">
         <div v-if="step === 1" class="form-grid">
+          <el-form-item label="手机号" prop="mobile">
+            <el-input v-model="form.mobile" placeholder="请输入手机号码，作为登录账号" maxlength="11" class="phone-input-with-code">
+              <template #suffix>
+                <span class="captcha-action" :class="{ 'is-disabled': typeof countdown === 'number' }"
+                  @click="handleSendCode">
+                  {{ typeof countdown === 'number' ? `${countdown}s` : countdown }}
+                </span>
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item label="验证码" prop="captchaCode">
+            <el-input v-model="form.captchaCode" placeholder="请输入验证码" maxlength="6" />
+          </el-form-item>
+
+          <el-form-item label="设置密码" prop="password" class="form-item-full">
+            <el-input v-model="form.password" type="password" show-password placeholder="请输入密码" />
+          </el-form-item>
+          <el-form-item label="再次输入密码" prop="confirmPassword" class="form-item-full">
+            <el-input v-model="form.confirmPassword" type="password" show-password placeholder="请再次输入密码" />
+          </el-form-item>
+        </div>
+
+        <div v-else-if="step === 2" class="form-grid">
           <el-form-item label="企业名称" prop="enterpriseName" class="form-item-full">
             <el-input v-model="form.enterpriseName" placeholder="请输入企业名称" />
           </el-form-item>
@@ -17,7 +40,7 @@
             <el-input v-model="form.creditCode" placeholder="请输入统一社会信用代码" />
           </el-form-item>
 
-          <el-form-item label="营业执照照片" prop="licenseFile" class="form-item-full" required>
+          <el-form-item label="营业执照照片" prop="licenseFile" class="form-item-full">
             <div class="license-upload" @click="openLicensePicker">
               <input ref="licenseInputRef" type="file" accept=".jpg,.jpeg,.png,.pdf" class="hidden-input"
                 @change="handleLicenseSelect" />
@@ -32,7 +55,7 @@
           </el-form-item>
         </div>
 
-        <div v-else-if="step === 2" class="form-grid">
+        <div v-else class="form-grid">
           <el-form-item label="法人" prop="legalPerson">
             <el-input v-model="form.legalPerson" placeholder="请输入法人姓名" />
           </el-form-item>
@@ -59,29 +82,6 @@
             </el-select>
           </el-form-item>
         </div>
-
-        <div v-else class="form-grid">
-          <el-form-item label="设置密码" prop="password" class="form-item-full">
-            <el-input v-model="form.password" type="password" show-password placeholder="请输入密码" />
-          </el-form-item>
-          <el-form-item label="再次输入密码" prop="confirmPassword" class="form-item-full">
-            <el-input v-model="form.confirmPassword" type="password" show-password placeholder="请再次输入密码" />
-          </el-form-item>
-
-          <el-form-item label="手机号" prop="mobile">
-            <el-input v-model="form.mobile" placeholder="请输入手机号码，作为登录账号" maxlength="11" class="phone-input-with-code">
-              <template #suffix>
-                <span class="captcha-action" :class="{ 'is-disabled': typeof countdown === 'number' }"
-                  @click="handleSendCode">
-                  {{ typeof countdown === 'number' ? `${countdown}s` : countdown }}
-                </span>
-              </template>
-            </el-input>
-          </el-form-item>
-          <el-form-item label="验证码" prop="captchaCode">
-            <el-input v-model="form.captchaCode" placeholder="请输入验证码" maxlength="6" />
-          </el-form-item>
-        </div>
       </el-form>
 
       <div class="action-row" :class="{ 'double-actions': step !== 1 }">
@@ -89,6 +89,11 @@
         <el-button class="next-btn" type="primary" :loading="submitLoading"
           @click="step < 3 ? goNextStep() : handleSubmit()">
           {{ step < 3 ? '下一步' : '提交' }} </el-button>
+      </div>
+
+      <div v-if="step === 1" class="login-link-row">
+        <span class="login-link-text">已有账号？</span>
+        <span class="login-link-btn" @click="router.push('/login')">去登录</span>
       </div>
     </div>
 
@@ -156,34 +161,12 @@ const form = ref<RegisterForm>({
   bankName: '',
 })
 
-const stepOneRules: FormRules<RegisterForm> = {
-  enterpriseName: [{ required: true, message: '请输入企业名称', trigger: 'blur' }],
-  enterpriseShortName: [{ required: true, message: '请输入企业简称', trigger: 'blur' }],
-  creditCode: [{ required: true, message: '请输入统一社会信用代码', trigger: 'blur' }],
-  licenseFile: [
-    {
-      validator: (_rule, value, callback) => {
-        if (value) {
-          callback()
-          return
-        }
-        callback(new Error('请上传营业执照照片'))
-      },
-      trigger: 'change',
-    },
-  ],
-}
+const stepOneRules: FormRules<RegisterForm> = {}
 
 const stepTwoRules: FormRules<RegisterForm> = {
-  legalPerson: [{ required: true, message: '请输入法人姓名', trigger: 'blur' }],
-  legalIdCard: [{ required: true, message: '请输入法人身份证号码', trigger: 'blur' }],
   email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
     { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
   ],
-  companyAddress: [{ required: true, message: '请输入公司地址', trigger: 'blur' }],
-  bankAccount: [{ required: true, message: '请输入对公账户号', trigger: 'blur' }],
-  bankName: [{ required: true, message: '请选择对公账户开户行', trigger: 'change' }],
 }
 
 const stepThreeRules: FormRules<RegisterForm> = {
@@ -212,9 +195,9 @@ const stepThreeRules: FormRules<RegisterForm> = {
 }
 
 const currentRules = computed(() => {
-  if (step.value === 1) return stepOneRules
-  if (step.value === 2) return stepTwoRules
-  return stepThreeRules
+  if (step.value === 1) return stepThreeRules
+  if (step.value === 2) return stepOneRules
+  return stepTwoRules
 })
 
 const validateCurrentStep = async () => {
@@ -357,14 +340,9 @@ const handleSubmit = async () => {
   const pass = await validateCurrentStep()
   if (!pass) return
 
-  if (!form.value.licenseFile) {
-    ElMessage.warning('请上传营业执照照片')
-    return
-  }
-
   submitLoading.value = true
   try {
-    const businessLicensePhoto = await uploadLicenseFile(form.value.licenseFile)
+    const businessLicensePhoto = form.value.licenseFile ? await uploadLicenseFile(form.value.licenseFile) : ''
 
     const res = await registerCustomer({
       enterpriseName: form.value.enterpriseName,
@@ -646,6 +624,26 @@ onBeforeUnmount(() => {
   cursor: not-allowed;
 }
 
+.login-link-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  margin-top: -60px;
+}
+
+.login-link-text {
+  font-size: 14px;
+  color: rgba(102, 102, 102, 1);
+}
+
+.login-link-btn {
+  font-size: 14px;
+  color: rgba(49, 125, 254, 1);
+  cursor: pointer;
+  user-select: none;
+}
+
 :deep(.phone-input-with-code .el-input__inner) {
   padding-right: 60px;
 }
@@ -707,6 +705,11 @@ onBeforeUnmount(() => {
   .prev-btn,
   .next-btn {
     width: 100%;
+  }
+
+  .login-link-row {
+    margin-top: -88px;
+    margin-bottom: 8px;
   }
 }
 </style>
