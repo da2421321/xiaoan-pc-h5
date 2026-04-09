@@ -217,28 +217,23 @@ const licenseDisplayText = computed(() => {
   return '点击上传营业执照'
 })
 
-const validateLicense = (_rule: unknown, _value: unknown, callback: (error?: Error) => void) => {
-  if (form.licenseFile || existingLicenseUrl.value) {
+const validateEmail = (_rule: unknown, value: string, callback: (error?: Error) => void) => {
+  if (!value) {
     callback()
     return
   }
-  callback(new Error('请上传营业执照照片'))
+
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (emailPattern.test(value)) {
+    callback()
+    return
+  }
+
+  callback(new Error('请输入正确的邮箱格式'))
 }
 
 const rules: FormRules<ProfileEditForm> = {
-  enterpriseName: [{ required: true, message: '请输入企业名称', trigger: 'blur' }],
-  enterpriseShortName: [{ required: true, message: '请输入企业简称', trigger: 'blur' }],
-  creditCode: [{ required: true, message: '请输入统一社会信用代码', trigger: 'blur' }],
-  licenseFile: [{ validator: validateLicense, trigger: 'change' }],
-  legalPerson: [{ required: true, message: '请输入法人姓名', trigger: 'blur' }],
-  legalIdCard: [{ required: true, message: '请输入法人身份证号码', trigger: 'blur' }],
-  email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
-  ],
-  companyAddress: [{ required: true, message: '请输入公司地址', trigger: 'blur' }],
-  bankAccount: [{ required: true, message: '请输入对公账户号', trigger: 'blur' }],
-  bankName: [{ required: true, message: '请选择对公账户开户行', trigger: 'change' }],
+  email: [{ validator: validateEmail, trigger: 'blur' }],
 }
 
 const isRequestSuccess = (res: ApiResponse) => {

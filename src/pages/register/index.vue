@@ -625,11 +625,14 @@ onBeforeUnmount(() => {
 }
 
 .login-link-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 94px;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 4px;
-  margin-top: -60px;
 }
 
 .login-link-text {
@@ -708,8 +711,9 @@ onBeforeUnmount(() => {
   }
 
   .login-link-row {
-    margin-top: -88px;
-    margin-bottom: 8px;
+    left: 16px;
+    right: 16px;
+    bottom: 126px;
   }
 }
 </style>
