@@ -118,6 +118,7 @@ export const editMemberProfile = (data: EditMemberProfileParams) => {
 
 // 企业注册请求参数
 export interface RegisterCustomerParams {
+  type?: string
   enterpriseName: string
   enterpriseAbbreviation: string
   unifiedSocialCreditCode: string

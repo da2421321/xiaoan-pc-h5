@@ -6,6 +6,19 @@
       <el-form ref="formRef" :model="form" :rules="currentRules" label-position="top" require-asterisk-position="right"
         :class="['register-form', 'register-form-step2']">
         <div v-if="step === 1" class="form-grid">
+          <el-form-item label="主体类型" prop="subjectType" class="form-item-full">
+            <div class="subject-type-group">
+              <button type="button" class="subject-type-btn" :class="{ 'is-active': form.subjectType === '1' }"
+                @click="form.subjectType = '1'">
+                企业
+              </button>
+              <button type="button" class="subject-type-btn" :class="{ 'is-active': form.subjectType === '0' }"
+                @click="form.subjectType = '0'">
+                个人
+              </button>
+            </div>
+          </el-form-item>
+
           <el-form-item label="手机号" prop="mobile">
             <el-input v-model="form.mobile" placeholder="请输入手机号码，作为登录账号" maxlength="11" class="phone-input-with-code">
               <template #suffix>
@@ -29,33 +42,46 @@
         </div>
 
         <div v-else-if="step === 2" class="form-grid">
-          <el-form-item label="企业名称" prop="enterpriseName" class="form-item-full">
-            <el-input v-model="form.enterpriseName" placeholder="请输入企业名称" />
-          </el-form-item>
+          <template v-if="isPersonalType">
+            <el-form-item label="客户名称" prop="enterpriseName" class="form-item-full">
+              <el-input v-model="form.enterpriseName" placeholder="请输入客户名称" />
+            </el-form-item>
+            <el-form-item label="联系人" prop="contactMan">
+              <el-input v-model="form.contactMan" placeholder="请输入联系人" />
+            </el-form-item>
+            <el-form-item label="邮箱" prop="email">
+              <el-input v-model="form.email" placeholder="请输入邮箱" />
+            </el-form-item>
+          </template>
+          <template v-else>
+            <el-form-item label="企业名称" prop="enterpriseName" class="form-item-full">
+              <el-input v-model="form.enterpriseName" placeholder="请输入企业名称" />
+            </el-form-item>
 
-          <el-form-item label="企业简称" prop="enterpriseShortName">
-            <el-input v-model="form.enterpriseShortName" placeholder="请输入企业简称" />
-          </el-form-item>
-          <el-form-item label="统一社会信用代码" prop="creditCode">
-            <el-input v-model="form.creditCode" placeholder="请输入统一社会信用代码" />
-          </el-form-item>
+            <el-form-item label="企业简称" prop="enterpriseShortName">
+              <el-input v-model="form.enterpriseShortName" placeholder="请输入企业简称" />
+            </el-form-item>
+            <el-form-item label="统一社会信用代码" prop="creditCode">
+              <el-input v-model="form.creditCode" placeholder="请输入统一社会信用代码" />
+            </el-form-item>
 
-          <el-form-item label="营业执照照片" prop="licenseFile" class="form-item-full">
-            <div class="license-upload" @click="openLicensePicker">
-              <input ref="licenseInputRef" type="file" accept=".jpg,.jpeg,.png,.pdf" class="hidden-input"
-                @change="handleLicenseSelect" />
-              <el-icon class="upload-icon">
-                <UploadFilled />
-              </el-icon>
-              <p class="upload-main-text">
-                {{ form.licenseFile ? `已选择：${form.licenseFile.name}` : '点击上传营业执照' }}
-              </p>
-              <p class="upload-sub-text">支持 JPG/PNG/PDF，大小不超过 10MB</p>
-            </div>
-          </el-form-item>
+            <el-form-item label="营业执照照片" prop="licenseFile" class="form-item-full">
+              <div class="license-upload" @click="openLicensePicker">
+                <input ref="licenseInputRef" type="file" accept=".jpg,.jpeg,.png,.pdf" class="hidden-input"
+                  @change="handleLicenseSelect" />
+                <el-icon class="upload-icon">
+                  <UploadFilled />
+                </el-icon>
+                <p class="upload-main-text">
+                  {{ form.licenseFile ? `已选择：${form.licenseFile.name}` : '点击上传营业执照' }}
+                </p>
+                <p class="upload-sub-text">支持 JPG/PNG/PDF，大小不超过 10MB</p>
+              </div>
+            </el-form-item>
+          </template>
         </div>
 
-        <div v-else class="form-grid">
+        <div v-else-if="step === 3" class="form-grid">
           <el-form-item label="法人" prop="legalPerson">
             <el-input v-model="form.legalPerson" placeholder="请输入法人姓名" />
           </el-form-item>
@@ -87,8 +113,8 @@
       <div class="action-row" :class="{ 'double-actions': step !== 1 }">
         <el-button v-if="step !== 1" class="prev-btn" :disabled="submitLoading" @click="goPrevStep">上一步</el-button>
         <el-button class="next-btn" type="primary" :loading="submitLoading"
-          @click="step < 3 ? goNextStep() : handleSubmit()">
-          {{ step < 3 ? '下一步' : '提交' }} </el-button>
+          @click="step < finalStep ? goNextStep() : handleSubmit()">
+          {{ step < finalStep ? '下一步' : '提交' }} </el-button>
       </div>
 
       <div v-if="step === 1" class="login-link-row">
@@ -115,7 +141,9 @@ defineOptions({
 })
 
 interface RegisterForm {
+  subjectType: '0' | '1'
   enterpriseName: string
+  contactMan: string
   enterpriseShortName: string
   creditCode: string
   licenseFile: File | null
@@ -145,7 +173,9 @@ const defaultBankOptions = ['中国工商银行', '中国农业银行', '中国�
 const bankOptions = ref<string[]>([...defaultBankOptions])
 
 const form = ref<RegisterForm>({
+  subjectType: '1',
   enterpriseName: '',
+  contactMan: '',
   enterpriseShortName: '',
   creditCode: '',
   licenseFile: null,
@@ -161,15 +191,16 @@ const form = ref<RegisterForm>({
   bankName: '',
 })
 
-const stepOneRules: FormRules<RegisterForm> = {}
+const isPersonalType = computed(() => form.value.subjectType === '0')
+const finalStep = computed<2 | 3>(() => (isPersonalType.value ? 2 : 3))
 
-const stepTwoRules: FormRules<RegisterForm> = {
-  email: [
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
+const stepOneRules: FormRules<RegisterForm> = {
+  subjectType: [{ required: true, message: '请选择主体类型', trigger: 'change' }],
+  mobile: [
+    { required: true, message: '请输入手机号码', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' },
   ],
-}
-
-const stepThreeRules: FormRules<RegisterForm> = {
+  captchaCode: [{ required: true, message: '请输入验证码', trigger: 'blur' }],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 6, message: '密码长度不能少于6位', trigger: 'blur' },
@@ -187,17 +218,26 @@ const stepThreeRules: FormRules<RegisterForm> = {
       trigger: 'blur',
     },
   ],
-  mobile: [
-    { required: true, message: '请输入手机号码', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' },
-  ],
-  captchaCode: [{ required: true, message: '请输入验证码', trigger: 'blur' }],
 }
 
+const stepTwoPersonalRules: FormRules<RegisterForm> = {
+  email: [
+    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
+  ],
+}
+
+const stepThreeRules: FormRules<RegisterForm> = {
+  email: [
+    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
+  ],
+}
+
+const stepTwoEnterpriseRules: FormRules<RegisterForm> = {}
+
 const currentRules = computed(() => {
-  if (step.value === 1) return stepThreeRules
-  if (step.value === 2) return stepOneRules
-  return stepTwoRules
+  if (step.value === 1) return stepOneRules
+  if (step.value === 2) return isPersonalType.value ? stepTwoPersonalRules : stepTwoEnterpriseRules
+  return stepThreeRules
 })
 
 const validateCurrentStep = async () => {
@@ -243,7 +283,7 @@ const goNextStep = async () => {
   if (!pass) return
   if (step.value === 1) {
     step.value = 2
-  } else if (step.value === 2) {
+  } else if (step.value === 2 && !isPersonalType.value) {
     step.value = 3
   }
   formRef.value?.clearValidate()
@@ -342,33 +382,37 @@ const handleSubmit = async () => {
 
   submitLoading.value = true
   try {
-    const businessLicensePhoto = form.value.licenseFile ? await uploadLicenseFile(form.value.licenseFile) : ''
+    const isPersonal = isPersonalType.value
+    const businessLicensePhoto = isPersonal
+      ? ''
+      : form.value.licenseFile
+        ? await uploadLicenseFile(form.value.licenseFile)
+        : ''
 
     const res = await registerCustomer({
+      type: form.value.subjectType,
       enterpriseName: form.value.enterpriseName,
-      enterpriseAbbreviation: form.value.enterpriseShortName,
-      unifiedSocialCreditCode: form.value.creditCode,
-      businessLicensePhoto,
+      enterpriseAbbreviation: isPersonal ? '' : form.value.enterpriseShortName,
+      unifiedSocialCreditCode: isPersonal ? '' : form.value.creditCode,
+      businessLicensePhoto: isPersonal ? '' : businessLicensePhoto,
       captcha: form.value.captchaCode,
-      legalPerson: form.value.legalPerson,
-      legalPersonIdCardNumber: form.value.legalIdCard,
+      legalPerson: isPersonal ? form.value.contactMan : form.value.legalPerson,
+      legalPersonIdCardNumber: isPersonal ? '' : form.value.legalIdCard,
       phoneNumber: form.value.mobile,
       password: form.value.password,
       email: form.value.email,
-      companyAddress: form.value.companyAddress,
-      corporateAccountNumber: form.value.bankAccount,
-      corporateAccountBank: form.value.bankName,
+      companyAddress: isPersonal ? '' : form.value.companyAddress,
+      corporateAccountNumber: isPersonal ? '' : form.value.bankAccount,
+      corporateAccountBank: isPersonal ? '' : form.value.bankName,
     })
 
     if (!isRequestSuccess(res as { code?: number | string; success?: boolean })) {
-      ElMessage.error(res?.message || '注册失败，请稍后重试')
       return
     }
-
     showRegisterSuccessDialog()
   } catch (error) {
     const message = (error as { message?: string })?.message || '注册失败，请稍后重试'
-    ElMessage.error(message)
+
   } finally {
     submitLoading.value = false
   }
@@ -649,6 +693,31 @@ onBeforeUnmount(() => {
 
 :deep(.phone-input-with-code .el-input__inner) {
   padding-right: 60px;
+}
+
+.subject-type-group {
+  display: flex;
+  gap: 12px;
+}
+
+.subject-type-btn {
+  width: 84px;
+  height: 42px;
+  border: 1px solid rgba(214, 223, 237, 1);
+  border-radius: 10px;
+  background: #F2F2FF;
+  color: rgba(92, 98, 116, 1);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 22px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.subject-type-btn.is-active {
+  border-color: rgba(49, 125, 254, 1);
+  background: rgba(49, 125, 254, 1);
+  color: rgba(255, 255, 255, 1);
 }
 
 @media (max-width: 1024px) {
