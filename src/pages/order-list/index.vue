@@ -211,7 +211,7 @@ const orderStatusOptions = [
   { label: '已预约', value: '6' },
   { label: '已出发', value: '7' },
   { label: '服务中', value: '8' },
-  { label: '交付完成', value: '9' },
+  { label: '平台验收中', value: '9' },
   { label: '待结算', value: '12' },
   { label: '已完成', value: '13' },
   { label: '已取消', value: '14' },

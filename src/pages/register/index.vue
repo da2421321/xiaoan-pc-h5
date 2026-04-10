@@ -232,7 +232,21 @@ const stepThreeRules: FormRules<RegisterForm> = {
   ],
 }
 
-const stepTwoEnterpriseRules: FormRules<RegisterForm> = {}
+const stepTwoEnterpriseRules: FormRules<RegisterForm> = {
+  enterpriseName: [
+    { required: true, message: '请输入企业名称', trigger: 'blur' },
+    {
+      validator: (_rule, value, callback) => {
+        if (typeof value === 'string' && value.trim()) {
+          callback()
+          return
+        }
+        callback(new Error('请输入企业名称'))
+      },
+      trigger: 'blur',
+    },
+  ],
+}
 
 const currentRules = computed(() => {
   if (step.value === 1) return stepOneRules
