@@ -85,7 +85,7 @@
               </div>
               <div class="flex items-center justify-between px-4 py-3 bg-[#F1F2FF] rounded-[6px] cursor-pointer"
                 @click="navigateToOrders('cancelled')">
-                <span class="text-sm text-gray-500">交付完成</span>
+                <span class="text-sm text-gray-500">平台验收中</span>
                 <span class="text-lg font-bold text-gray-800">{{ orderStats.cancelled }}</span>
               </div>
               <div class="flex items-center justify-between px-4 py-3 bg-[#F1F2FF] rounded-[6px] cursor-pointer"

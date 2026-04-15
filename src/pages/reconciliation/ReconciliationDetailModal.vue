@@ -42,7 +42,7 @@
                 <td class="value-cell">
                   <span class="text-blue-500 cursor-pointer hover:underline">{{
                     reconciliationDetail.status
-                  }}</span>
+                    }}</span>
                 </td>
               </tr>
               <tr>
@@ -50,7 +50,7 @@
                 <td class="value-cell">
                   <span class="text-red-500 font-medium">¥{{
                     formatAmount(reconciliationDetail.reconciliationAmount)
-                  }}</span>
+                    }}</span>
                 </td>
                 <td class="label-cell"></td>
                 <td class="value-cell"></td>
@@ -108,7 +108,7 @@
                 <div class="text-sm text-gray-800 font-bold truncate">{{ file.name }}</div>
                 <div class="text-xs text-gray-400 mt-1">上传时间：{{ (file as any).createTime || new
                   Date().toLocaleString()
-                }}
+                  }}
                 </div>
               </div>
               <div class="flex gap-1">
@@ -196,7 +196,7 @@
             <template #pendingAmount="{ row }">
               <span class="text-red-500 font-medium">{{ formatAmount((row.billAmount || 0) -
                 (row.billSettAmount || 0))
-              }}</span>
+                }}</span>
             </template>
             <template #contactInfo="{ row }">
               <div class="flex flex-col leading-tight">
@@ -536,7 +536,7 @@ const orderStatusMap: Record<number, string> = {
   6: '已预约',
   7: '已出发',
   8: '服务中',
-  9: '交付完成',
+  9: '平台验收中',
   12: '待结算',
   13: '已完成',
   14: '已取消',
