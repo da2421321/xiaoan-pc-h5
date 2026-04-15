@@ -1,13 +1,13 @@
 <template>
-  <div class="bg-white h-full flex flex-col">
+  <div class="bg-white h-full flex flex-col overflow-hidden">
     <!-- 顶部标题栏 -->
-    <div class="px-6 pt-4 pb-2 flex justify-between items-center">
+    <div class="px-6 pt-4 pb-2 flex justify-between items-center flex-shrink-0">
       <h1 class="text-lg font-semibold text-gray-800">订单管理</h1>
 
     </div>
-    <div class="mx-6 h-[3px] bg-[#F1F2F6]"></div>
+    <div class="mx-6 h-[3px] bg-[#F1F2F6] flex-shrink-0"></div>
     <!-- 筛选区域 -->
-    <div class="px-6 py-3">
+    <div class="px-6 py-3 flex-shrink-0">
       <div class="flex items-center gap-3 flex-wrap">
         <el-select v-model="searchForm.businessType" placeholder="业务类型" clearable size="default" class="!w-28">
           <el-option v-for="item in businessTypeList" :key="item.id" :label="item.name" :value="item.id" />
@@ -44,11 +44,11 @@
     </div>
 
     <!-- 表格区域 -->
-    <div class="flex-1  px-4 py-3">
+    <div class="flex-1 min-h-0 px-4 py-3">
       <CommonTable :data="orderList" :columns="columns" :loading="loading" :show-pagination="true"
         :current-page="currentPage" business-type="order" :page-size="pageSize" :total="totalOrders"
-        :search="handlesearch" :header-cell-style="{ fontSize: '13px', height: '44px' }" class="order-table"
-        @current-change="handleCurrentChange" @size-change="handleSizeChange">
+        :search="handlesearch" table-height="100%" :header-cell-style="{ fontSize: '13px', height: '44px' }"
+        class="order-table h-full" @current-change="handleCurrentChange" @size-change="handleSizeChange">
         <template #createTime="{ row }">
           <div class="flex flex-col text-sm">
             <span class="text-[#333]">{{ row.createTime }}</span>

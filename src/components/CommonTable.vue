@@ -1,7 +1,7 @@
 <template>
-    <div class="common-table-wrapper">
+    <div class="common-table-wrapper" :class="{ 'is-fixed-height': tableHeight }">
         <Loading :visible="loading" />
-        <el-table :data="data" style="width: 100%" :header-cell-style="mergedHeaderCellStyle"
+        <el-table :data="data" style="width: 100%" :height="tableHeight" :header-cell-style="mergedHeaderCellStyle"
             :cell-style="mergedCellStyle" :row-style="mergedRowStyle">
             <template v-for="column in columns" :key="column.prop || column.label">
 
@@ -41,8 +41,9 @@
             </template>
         </el-table>
 
-        <Pagination v-if="showPagination && data.length > 0" :current-page="currentPage" :page-size="pageSize"
-            :total="total" :page-sizes="pageSizes" @current-change="handleCurrentChange"
+        <Pagination v-if="showPagination && data.length > 0" class="common-table-pagination"
+            :current-page="currentPage" :page-size="pageSize" :total="total" :page-sizes="pageSizes"
+            @current-change="handleCurrentChange"
             @size-change="handleSizeChange" />
     </div>
 </template>
@@ -80,6 +81,7 @@ interface Props {
     headerCellStyle?: Record<string, any>
     rowStyle?: Record<string, any>
     cellStyle?: Record<string, any>
+    tableHeight?: string | number
     emptyText?: string
     search?: boolean
     emptyImage?: string
@@ -194,5 +196,21 @@ const handleSizeChange = (size: number) => {
 <style scoped>
 .common-table-wrapper {
     width: 100%;
+}
+
+.common-table-wrapper.is-fixed-height {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.common-table-wrapper.is-fixed-height :deep(.el-table) {
+    flex: 1;
+    min-height: 0;
+}
+
+.common-table-wrapper.is-fixed-height .common-table-pagination {
+    flex-shrink: 0;
 }
 </style>
