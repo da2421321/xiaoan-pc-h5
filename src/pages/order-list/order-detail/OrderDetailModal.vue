@@ -213,7 +213,7 @@
       </div>
     </div>
     <template #footer v-if="showCancelButton">
-      <div class="flex justify-end px-4 pb-2">
+      <div class="flex justify-center px-4 pb-2">
         <el-button type="danger" @click="handleCancel">取消订单</el-button>
       </div>
     </template>
@@ -506,7 +506,7 @@ const handleViewDelivey = async () => {
 
 // 只有待付款(status=0)才能取消订单
 const showCancelButton = computed(() => {
-  return Number(orderData.value?.status) === 0
+  return [0, 1].includes(Number(orderData.value?.status))
 })
 
 const handleCancel = async () => {
