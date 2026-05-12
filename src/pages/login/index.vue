@@ -67,9 +67,9 @@
         <div class="w-full">
           <el-button class="w-full h-[50px] text-[16px]" :loading="isLoggingIn" @click="handleLogin">登录</el-button>
         </div>
-        <div class="w-full text-right mt-3">
+        <!-- <div class="w-full text-right mt-3">
           <span class="register-link cursor-pointer text-[14px]" @click="goToRegister">没有账号？去注册</span>
-        </div>
+        </div> -->
       </div>
     </div>
 

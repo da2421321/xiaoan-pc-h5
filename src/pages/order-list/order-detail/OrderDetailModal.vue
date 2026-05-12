@@ -504,7 +504,7 @@ const handleViewDelivey = async () => {
   deliveryinfodialogVisible.value = true
 }
 
-// 只有待付款(status=0)才能取消订单
+// 只有待付款或者待受理(status=0)才能取消订单
 const showCancelButton = computed(() => {
   return [0, 1].includes(Number(orderData.value?.status))
 })
