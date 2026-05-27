@@ -12,8 +12,8 @@
         class="profile-edit-form">
         <div class="form-grid">
           <template v-if="isPersonalType">
-            <el-form-item label="客户名称" prop="enterpriseName" class="form-item-full">
-              <el-input v-model="form.enterpriseName" placeholder="请输入客户名称" />
+            <el-form-item label="客户名称" prop="customerName" class="form-item-full">
+              <el-input v-model="form.customerName" placeholder="请输入客户名称" />
             </el-form-item>
             <el-form-item label="联系人" prop="contactMan">
               <el-input v-model="form.contactMan" placeholder="请输入联系人" />
@@ -27,7 +27,11 @@
           </template>
 
           <template v-else>
-            <el-form-item label="企业名称" prop="enterpriseName" class="form-item-full">
+            <el-form-item label="客户名称" prop="customerName">
+              <el-input v-model="form.customerName" placeholder="请输入客户名称" />
+            </el-form-item>
+
+            <el-form-item label="企业名称" prop="enterpriseName">
               <el-input v-model="form.enterpriseName" placeholder="请输入企业名称" />
             </el-form-item>
 
@@ -152,6 +156,7 @@ interface UserProfileSource {
 }
 
 interface ProfileEditForm {
+  customerName: string
   enterpriseName: string
   contactMan: string
   contactPhone: string
@@ -203,6 +208,7 @@ const dialogVisible = computed({
 })
 
 const form = reactive<ProfileEditForm>({
+  customerName: '',
   enterpriseName: '',
   contactMan: '',
   contactPhone: '',
@@ -267,6 +273,7 @@ const parseOptionalNumber = (value: unknown) => {
 }
 
 const resetForm = () => {
+  form.customerName = ''
   form.enterpriseName = ''
   form.contactMan = ''
   form.contactPhone = ''
@@ -288,7 +295,9 @@ const syncFormFromUserInfo = () => {
 
   const source = props.userInfo || {}
   profileType.value = resolveProfileType(source)
-  form.enterpriseName = source.customer?.name || source.bodyInfo?.name || ''
+  const isPersonal = profileType.value === PERSONAL_TYPE
+  form.customerName = source.customer?.name || source.bodyInfo?.name || ''
+  form.enterpriseName = isPersonal ? '' : source.bodyInfo?.name || source.customer?.name || ''
   form.contactMan = source.customer?.contactMan || source.bodyInfo?.contactMan || source.customer?.legalPerson || source.realName || ''
   form.contactPhone = source.customer?.contactPhone || source.bodyInfo?.contactPhone || source.account || ''
   form.enterpriseShortName = source.customer?.subName || ''
@@ -383,6 +392,8 @@ const handleSubmit = async () => {
     const source = props.userInfo || {}
     const currentType = resolveProfileType(source)
     const isPersonal = currentType === PERSONAL_TYPE
+    const customerName = form.customerName
+    const enterpriseName = isPersonal ? form.customerName : form.enterpriseName
     const businessLicensePhoto = isPersonal
       ? source.customer?.license || existingLicenseUrl.value
       : form.licenseFile
@@ -395,7 +406,7 @@ const handleSubmit = async () => {
         id: parseOptionalNumber(source.bodyInfo?.id || source.bodyId),
         userRose,
         type: source.bodyInfo?.type || currentType,
-        name: form.enterpriseName,
+        name: enterpriseName,
         personName: source.bodyInfo?.personName || form.contactMan || form.legalPerson,
         personPhone: source.bodyInfo?.personPhone || form.contactPhone,
         personNumber: source.bodyInfo?.personNumber || '',
@@ -419,7 +430,7 @@ const handleSubmit = async () => {
       avatar: source.avatar,
       personInfo: {
         type: currentType,
-        name: form.enterpriseName,
+        name: customerName,
         contactMan: form.contactMan,
         contactPhone: form.contactPhone,
         contactEmail: form.email,

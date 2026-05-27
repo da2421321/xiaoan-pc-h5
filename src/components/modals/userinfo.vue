@@ -39,7 +39,7 @@
         <div class="pt-1">
           <div class="mb-5">
             <p class="text-[20px] font-bold text-gray-900 leading-tight mb-1">
-              {{ userInfo.realName || userInfo.nickname || '-' }}
+              {{ userInfo.realName || userInfo.customer.name || '-' }}
             </p>
             <p class="text-[14px] text-gray-500">{{ userInfo.bodyInfo?.name || userInfo.customer?.name || '-' }}</p>
           </div>
