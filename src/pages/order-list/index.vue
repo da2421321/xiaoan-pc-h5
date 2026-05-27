@@ -157,11 +157,29 @@ interface Order {
   payMsg?: string
   remark?: string
   settleAmount?: number
+  businessUserName?: string
 }
 
 interface ProjectItem {
   id: string
   name: string
+}
+
+interface OrderListParams {
+  pageNo: number
+  pageSize: number
+  status?: number
+  projectId?: string
+  orderId?: string
+  keyWord?: string
+  beginDate?: string
+  endDate?: string
+  supplementConfirm?: string
+  workConfirm?: string
+  platformType?: string
+  itemName?: string
+  itemCode?: string
+  orderUserName?: string
 }
 
 defineOptions({
@@ -202,6 +220,7 @@ const orderList = ref<Order[]>([])
 const totalOrders = ref<number>(0)
 const totalPages = ref<number>(0)
 const businessTypeList = ref<ProjectItem[]>([])
+const EXPORT_PAGE_SIZE = 500
 
 // 订单状态选项
 const orderStatusOptions = [
@@ -224,6 +243,7 @@ const columns: ColumnConfig[] = [
   { prop: 'createTime', label: '下单时间', width: 140, slot: 'createTime' },
   { prop: 'orderUserName', label: '下单人', width: 140 },
   { prop: 'finishDate', label: '完成时间', width: 140, slot: 'finishDate' },
+  { prop: 'businessUserName', label: '责任销售', width: 100 },
   { prop: 'status', label: '订单状态', width: 100, align: 'center', slot: 'status' },
   { prop: 'userPhone', label: '联系电话', width: 130, slot: 'contact' },
   { prop: 'userAddress', label: '地址', minWidth: 150, showOverflowTooltip: true },
@@ -237,29 +257,13 @@ const columns: ColumnConfig[] = [
   { label: '操作', width: 80, align: 'center', slot: 'operation', fixed: 'right' },
 ]
 
-const getOrderListData = async () => {
-  loading.value = true
-  const params: {
-    pageNo: number
-    pageSize: number
-    status?: number
-    projectId?: string
-    orderId?: string
-    keyWord?: string
-    beginDate?: string
-    endDate?: string
-    supplementConfirm?: string
-    workConfirm?: string
-    platformType?: string
-    itemName?: string
-    itemCode?: string
-    orderUserName?: string
-  } = {
-    pageNo: currentPage.value,
-    pageSize: pageSize.value,
+const buildOrderListParams = (pageNo = currentPage.value, size = pageSize.value): OrderListParams => {
+  const params: OrderListParams = {
+    pageNo,
+    pageSize: size,
+    platformType: '1',
   }
 
-  params.platformType = '1'
   if (searchForm.value.businessType) {
     params.projectId = searchForm.value.businessType
   }
@@ -293,6 +297,13 @@ const getOrderListData = async () => {
   if (workConfirm.value !== undefined) {
     params.workConfirm = '0'
   }
+
+  return params
+}
+
+const getOrderListData = async () => {
+  loading.value = true
+  const params = buildOrderListParams()
 
   try {
     const res = (await getOrderList(params)) as ApiResponse<OrderListData>
@@ -372,6 +383,11 @@ const formatAmount = (amount: number) => {
   return (Number(amount)).toFixed(2)
 }
 
+const formatDateOnly = (value?: string | null) => {
+  if (!value) return ''
+  return String(value).split(/[ T]/)[0] || ''
+}
+
 const viewOrder = (order: Order) => {
   selectedOrderId.value = String(order.orderId)
   showOrderDetail.value = true
@@ -413,9 +429,10 @@ const exportLoading = ref(false)
 const orderExportColumns: ExportColumn[] = [
   { prop: 'orderId', label: '订单号' },
   { prop: 'projectName', label: '业务类型' },
-  { prop: 'createTime', label: '下单时间' },
+  { prop: 'createTime', label: '下单时间', formatter: (v) => formatDateOnly(v) },
   { prop: 'orderUserName', label: '下单人' },
-  { prop: 'finishDate', label: '完成时间' },
+  { prop: 'finishDate', label: '完成时间', formatter: (v) => formatDateOnly(v) },
+  { prop: 'businessUserName', label: '责任销售' },
   { prop: 'orderStatus', label: '订单状态' },
   { prop: 'realName', label: '联系人' },
   { prop: 'userPhone', label: '联系电话' },
@@ -428,15 +445,38 @@ const orderExportColumns: ExportColumn[] = [
   { prop: 'settleAmount', label: '结算金额', formatter: (v) => v != null ? `¥${Number(v || 0).toFixed(2)}` : '-' },
 ]
 
-const handleExport = async () => {
-  if (orderList.value.length === 0) {
-    ElMessage.warning('暂无数据可导出')
-    return
+const fetchExportOrders = async () => {
+  const firstRes = (await getOrderList(buildOrderListParams(1, EXPORT_PAGE_SIZE))) as ApiResponse<OrderListData>
+  if (firstRes.code !== '00000' || !firstRes.data) {
+    throw new Error(firstRes.message || '获取导出订单失败')
   }
+
+  const rows = [...(firstRes.data.rows || [])]
+  const totalRows = firstRes.data.totalRows || rows.length
+  const totalPage = firstRes.data.totalPage || Math.ceil(totalRows / EXPORT_PAGE_SIZE)
+
+  for (let pageNo = 2; pageNo <= totalPage; pageNo += 1) {
+    const res = (await getOrderList(buildOrderListParams(pageNo, EXPORT_PAGE_SIZE))) as ApiResponse<OrderListData>
+    if (res.code !== '00000' || !res.data) {
+      throw new Error(res.message || '获取导出订单失败')
+    }
+    rows.push(...(res.data.rows || []))
+  }
+
+  return rows.slice(0, totalRows)
+}
+
+const handleExport = async () => {
   exportLoading.value = true
   try {
+    const exportRows = await fetchExportOrders()
+    if (exportRows.length === 0) {
+      ElMessage.warning('暂无数据可导出')
+      return
+    }
+
     exportToExcel({
-      data: orderList.value,
+      data: exportRows,
       columns: orderExportColumns,
       filename: '订单列表',
       sheetName: '订单数据'
