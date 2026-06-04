@@ -159,10 +159,10 @@
 
             <div class="flex gap-5 mb-2">
               <span class="flex items-center text-xs text-gray-600">
-                <i class="w-2.5 h-2.5 rounded-sm mr-1.5 bg-[#2d78f4]"></i>结算金额
+                <i class="w-2.5 h-2.5 rounded-sm mr-1.5 bg-[#00d4ff]"></i>结算金额
               </span>
               <span class="flex items-center text-xs text-gray-600">
-                <i class="w-2.5 h-2.5 rounded-sm mr-1.5 bg-[#00d4ff]"></i>订单金额
+                <i class="w-2.5 h-2.5 rounded-sm mr-1.5 bg-[#2d78f4]"></i>订单金额
               </span>
             </div>
             <div ref="lineChartContainer" class="h-56"></div>

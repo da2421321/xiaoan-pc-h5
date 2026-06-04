@@ -421,11 +421,6 @@ const rules: FormRules<AddressForm> = {
     contact: [{ required: true, message: '请输入联系人', trigger: 'blur' }],
     phone: [
         { required: true, message: '请输入联系电话', trigger: 'blur' },
-        {
-            pattern: /^1[3-9]\d{9}$/,
-            message: '请输入正确的手机号码',
-            trigger: 'blur',
-        },
     ],
     province: [{ required: true, message: '请选择省份', trigger: 'change' }],
     city: [{ required: true, message: '请选择城市', trigger: 'change' }],
