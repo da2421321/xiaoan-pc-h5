@@ -528,6 +528,54 @@ const shopInfo = computed({
   set: (val) => orderFormStore.updateFormData(categoryId.value, { shopInfo: val })
 })
 
+type UploadedFileItem = UploadUserFile & {
+  raw?: File & { uid?: number }
+  response?: {
+    url?: string
+    data?: {
+      fileUrl?: string
+    }
+  }
+}
+
+const updateUploadedFileUrl = (rawFile: File, fileUrl: string) => {
+  const rawUid = (rawFile as File & { uid?: number }).uid
+  if (rawUid === undefined) {
+    return
+  }
+
+  const uploadLists = [fileList, customFileList, templateFileList]
+  uploadLists.forEach((uploadList) => {
+    const target = uploadList.value.find((item) => {
+      const uploadItem = item as UploadedFileItem
+      return uploadItem.uid === rawUid || uploadItem.raw?.uid === rawUid
+    })
+
+    if (target) {
+      const uploadItem = target as UploadedFileItem
+      target.url = fileUrl
+      uploadItem.response = {
+        ...(uploadItem.response || {}),
+        url: fileUrl,
+        data: {
+          ...(uploadItem.response?.data || {}),
+          fileUrl,
+        },
+      }
+      uploadList.value = [...uploadList.value]
+    }
+  })
+}
+
+const getUploadedFileUrl = (file: UploadUserFile) => {
+  const uploadItem = file as UploadedFileItem
+  if (uploadItem.url && !uploadItem.url.startsWith('blob:')) {
+    return uploadItem.url
+  }
+
+  return uploadItem.response?.data?.fileUrl || uploadItem.response?.url || ''
+}
+
 // 预览相关
 const previewDialogVisible = ref(false)
 const previewUrl = ref('')
@@ -970,6 +1018,7 @@ const handleUploadRequest: UploadProps['httpRequest'] = async (options) => {
 
     const fileUrl = (response as { data?: { fileUrl?: string } }).data?.fileUrl || ''
     if (fileUrl) {
+      updateUploadedFileUrl(file, fileUrl)
       onSuccess({ url: fileUrl })
       ElMessage.success(`${file.name} 上传成功`)
     } else {
@@ -1178,7 +1227,7 @@ const getFormData = () => {
   let templateFileValue = null
   if (otherConfig.value.template === '其他' && templateFileList.value.length > 0) {
     templateFileValue = templateFileList.value
-      .map((file: UploadUserFile) => file.url || '')
+      .map((file: UploadUserFile) => getUploadedFileUrl(file))
       .filter(Boolean)
       .join(',')
   }
@@ -1292,7 +1341,7 @@ const getFormData = () => {
     // 备注和附件
     remark: remarkInfo.value.content, // 备注信息
     thumps: fileList.value
-      .map((file: UploadUserFile) => file.url || '')
+      .map((file: UploadUserFile) => getUploadedFileUrl(file))
       .filter(Boolean)
       .join(','),
 
@@ -1317,7 +1366,7 @@ const getFormData = () => {
       content: customOrder.value.content,
       // 自定义订单的附件
       thumps: customFileList.value
-        .map((file: UploadUserFile) => file.url || '')
+        .map((file: UploadUserFile) => getUploadedFileUrl(file))
         .filter(Boolean)
         .join(','),
       orderDetails: [], // 自定义订单清空 orderDetails
