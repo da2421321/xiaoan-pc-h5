@@ -27,7 +27,7 @@
 
                 <!-- 提交按钮 -->
                 <div class="flex justify-center mb-6">
-                    <el-button type="primary" class="submit-btn" :disabled="!hasFile || batchOrderList.length === 0"
+                    <el-button type="primary" class="submit-btn" :disabled="!hasFile || batchOrderList.length === 0 || hasBatchOrderRemark"
                         :loading="submitting" @click="handleSubmitBatch">
                         提交
                     </el-button>
@@ -91,7 +91,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage, type UploadFile, type UploadInstance, type UploadRawFile } from 'element-plus'
 import { Delete } from '@element-plus/icons-vue'
 import { getTemplateFile, uploadOrderFile, batchOrder } from '@/api/order'
@@ -137,6 +137,9 @@ const hasFile = ref(false)
 const submitting = ref(false)
 const batchOrderList = ref<BatchOrderItem[]>([])
 const currentFile = ref<UploadRawFile | null>(null)
+const hasBatchOrderRemark = computed(() =>
+    batchOrderList.value.some((item) => item.isException || Boolean(item.exceptionMsg?.trim())),
+)
 
 // 下载模板
 const handleDownloadTemplate = async () => {
@@ -227,6 +230,10 @@ const handleDeleteOrder = (index: number) => {
 
 // 提交批量下单
 const handleSubmitBatch = async () => {
+    if (hasBatchOrderRemark.value) {
+        return
+    }
+
     if (batchOrderList.value.length === 0) {
         ElMessage.warning('请先上传订单文件')
         return

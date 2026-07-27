@@ -45,8 +45,8 @@ export interface SendCodeResponse {
 }
 
 // 发送验证码
-export const sendCode = (phone: string) => {
-  return http.post<Response<null>>(`/front/sendCode?phone=${phone}`)
+export const sendCode = (phone: string, headers?: Record<string, string>) => {
+  return http.post<Response<null>>(`/front/sendCode?phone=${phone}`, {}, { headers })
 }
 
 // 获取个人信息

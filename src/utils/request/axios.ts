@@ -20,8 +20,10 @@ const service = axios.create({
 // axios实例拦截请求
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('token')
-    config.headers.Authorization = `${token}`
+    if (!config.headers.Authorization) {
+      const token = localStorage.getItem('token')
+      config.headers.Authorization = `${token}`
+    }
     return config
   },
   (error: AxiosError) => {

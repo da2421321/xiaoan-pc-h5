@@ -98,6 +98,7 @@ type LoginMode = 'captcha' | 'password'
 const userStore = useUserStore()
 const sessionManager = useSessionManager()
 const router = useRouter()
+const SEND_CODE_AUTHORIZATION = '87f4b816c7285c91681ac3b93f47549c'
 
 // 表单数据
 const phone = ref('')
@@ -167,7 +168,9 @@ const getCaptcha = async () => {
     return
   }
 
-  const res = await sendCode(phone.value)
+  const res = await sendCode(phone.value, {
+    Authorization: SEND_CODE_AUTHORIZATION,
+  })
   if (res.code === '200') {
     ElMessage.success('验证码发送成功')
     countdown.value = 60
