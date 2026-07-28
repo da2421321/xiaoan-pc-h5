@@ -79,7 +79,7 @@
 
     <el-dialog v-model="humanVerificationVisible" title="安全验证" width="400px" align-center :close-on-click-modal="false"
       :close-on-press-escape="false" :show-close="!humanVerificationPassed" class="human-verification-dialog"
-      @closed="resetHumanVerification">
+      @closed="handleHumanVerificationClosed">
       <div class="human-verification-content">
         <p class="human-verification-tip">请按住滑块，拖动到最右侧完成验证</p>
         <div ref="sliderTrack" class="human-verification-slider"
@@ -125,7 +125,7 @@ type LoginMode = 'captcha' | 'password'
 
 const sessionManager = useSessionManager()
 const router = useRouter()
-const SEND_CODE_AUTHORIZATION = '87f4b816c7285c91681ac3b93f47549c'
+const SEND_CODE_AUTHORIZATION_BASE_URL = 'https://wechat.shenzhenxiaoan.com/'
 
 // 表单数据
 const phone = ref('')
@@ -151,6 +151,7 @@ const humanVerificationPassed = ref(false)
 const sliderTrack = ref<HTMLElement | null>(null)
 const sliderOffset = ref(0)
 const isSliderDragging = ref(false)
+const shouldSendCodeAfterVerification = ref(false)
 let sliderStartX = 0
 let sliderStartOffset = 0
 let humanVerificationTimer: ReturnType<typeof setTimeout> | null = null
@@ -242,9 +243,19 @@ const completeHumanVerification = () => {
   clearHumanVerificationTimer()
   humanVerificationTimer = setTimeout(() => {
     humanVerificationTimer = null
+    shouldSendCodeAfterVerification.value = true
     humanVerificationVisible.value = false
-    void sendCaptcha()
   }, 400)
+}
+
+const handleHumanVerificationClosed = () => {
+  const shouldSendCode = shouldSendCodeAfterVerification.value
+  shouldSendCodeAfterVerification.value = false
+  resetHumanVerification()
+
+  if (shouldSendCode) {
+    void sendCaptcha()
+  }
 }
 
 const startSliding = (event: PointerEvent) => {
@@ -316,6 +327,7 @@ const getCaptcha = () => {
   }
   if (!validateSendCodeForm()) return
 
+  shouldSendCodeAfterVerification.value = false
   resetHumanVerification()
   humanVerificationVisible.value = true
 }
@@ -326,7 +338,7 @@ const sendCaptcha = async () => {
   isSendingCode.value = true
   try {
     const res = await sendCode(phone.value, {
-      Authorization: `${SEND_CODE_AUTHORIZATION}${md5(phone.value)}`,
+      Authorization: md5(`${SEND_CODE_AUTHORIZATION_BASE_URL}${phone.value}`),
     })
     if (res.code !== '200' && res.code !== 200) {
       ElMessage.error(res.message || '验证码发送失败')
