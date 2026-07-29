@@ -39,14 +39,43 @@ export const login = (data: Record<string, unknown>) => {
 }
 
 // 发送验证码响应
-export interface SendCodeResponse {
-  code: string
-  message: string
+export interface SendCodeResult {
+  captchaVerifyResult: boolean
+  bizResult: boolean
 }
 
+// 阿里云验证码验证成功后返回，并需原样提交给发送验证码接口的参数。
+export interface CaptchaVerifyParams {
+  sceneId: string
+  certifyId: string
+  deviceToken: string
+  data: string
+}
+
+type CaptchaVerifyParamInput = CaptchaVerifyParams | string
+
 // 发送验证码
-export const sendCode = (phone: string, headers?: Record<string, string>) => {
-  return http.post<Response<null>>(`/front/sendCode?phone=${phone}`, {}, { headers })
+export const sendCode = (
+  phone: string,
+  captchaVerifyParams?: CaptchaVerifyParamInput,
+  headers?: Record<string, string>,
+) => {
+  const query = new URLSearchParams({ phone })
+
+  if (captchaVerifyParams) {
+    query.set(
+      'captchaVerifyParam',
+      typeof captchaVerifyParams === 'string'
+        ? captchaVerifyParams
+        : JSON.stringify(captchaVerifyParams),
+    )
+  }
+
+  return http.post<Response<SendCodeResult>>(
+    `/front/sendCode?${query.toString()}`,
+    {},
+    { headers },
+  )
 }
 
 // 获取个人信息

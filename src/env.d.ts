@@ -20,6 +20,8 @@ interface ImportMetaEnv {
   readonly VITE_APP_SSO_ID: string
   readonly VITE_APP_BACKEND_HOST: string
   readonly VITE_DEV_TEST_API: string
+  readonly VITE_ALIYUN_CAPTCHA_SCENE_ID?: string
+  readonly VITE_ALIYUN_CAPTCHA_PREFIX?: string
 }
 
 interface ImportMeta {
