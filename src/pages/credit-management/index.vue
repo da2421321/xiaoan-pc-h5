@@ -105,6 +105,7 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const walletId = ref('')
+const EXPORT_PAGE_SIZE = 500
 const form = reactive({
     keyword: '',
     dateRange: [] as string[],
@@ -131,18 +132,19 @@ const getStats = async () => {
     }
 }
 
+const buildCreditListParams = (pageNo = currentPage.value, size = pageSize.value) => ({
+    pageNo,
+    pageSize: size,
+    walletId: walletId.value,
+    searchText: form.keyword,
+    searchBeginTime: form.dateRange?.[0] || null,
+    searchEndTime: form.dateRange?.[1] || null,
+})
+
 const getList = async () => {
     loading.value = true
     try {
-        const params = {
-            pageNo: currentPage.value,
-            pageSize: pageSize.value,
-            walletId: walletId.value,
-            searchText: form.keyword,
-            searchBeginTime: form.dateRange?.[0] || null,
-            searchEndTime: form.dateRange?.[1] || null,
-        }
-        const res: any = await getCreditList(params)
+        const res: any = await getCreditList(buildCreditListParams())
         if (res.success) {
             tableData.value = res.data.rows
             total.value = res.data.totalRows
@@ -172,7 +174,11 @@ const handleCurrentChange = (val: number) => { currentPage.value = val; getList(
 // 导出Excel
 const exportLoading = ref(false)
 const creditExportColumns: ExportColumn[] = [
-    { prop: 'transactionTime', label: '交易时间' },
+    {
+        prop: 'transactionTime',
+        label: '交易时间',
+        formatter: (value) => String(value ?? '').replace('T', ' '),
+    },
     {
         prop: 'amount',
         label: '额度',
@@ -185,15 +191,38 @@ const creditExportColumns: ExportColumn[] = [
     { prop: 'operaEntityName', label: '操作者' }
 ]
 
-const handleExport = async () => {
-    if (tableData.value.length === 0) {
-        ElMessage.warning('暂无数据可导出')
-        return
+const fetchExportRows = async () => {
+    const firstRes: any = await getCreditList(buildCreditListParams(1, EXPORT_PAGE_SIZE))
+    if (!firstRes.success || !firstRes.data) {
+        throw new Error(firstRes.message || '获取导出额度记录失败')
     }
+
+    const rows = [...(firstRes.data.rows || [])]
+    const totalRows = firstRes.data.totalRows ?? rows.length
+    const totalPage = firstRes.data.totalPage || Math.ceil(totalRows / EXPORT_PAGE_SIZE)
+
+    for (let pageNo = 2; pageNo <= totalPage; pageNo += 1) {
+        const res: any = await getCreditList(buildCreditListParams(pageNo, EXPORT_PAGE_SIZE))
+        if (!res.success || !res.data) {
+            throw new Error(res.message || '获取导出额度记录失败')
+        }
+        rows.push(...(res.data.rows || []))
+    }
+
+    return rows.slice(0, totalRows)
+}
+
+const handleExport = async () => {
     exportLoading.value = true
     try {
+        const exportRows = await fetchExportRows()
+        if (exportRows.length === 0) {
+            ElMessage.warning('暂无数据可导出')
+            return
+        }
+
         exportToExcel({
-            data: tableData.value,
+            data: exportRows,
             columns: creditExportColumns,
             filename: '额度使用记录',
             sheetName: '额度数据'

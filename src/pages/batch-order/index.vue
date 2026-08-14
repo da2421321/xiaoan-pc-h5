@@ -41,6 +41,7 @@
                         fontWeight: '500',
                         height: '48px'
                     }" :row-style="{ color: '#333' }" stripe style="width: 100%" class="common-table-wrapper">
+                        <el-table-column type="index" label="序号" width="70" />
                         <el-table-column prop="price" label="订单金额" width="100">
                             <template #default="{ row }">
                                 ¥{{ row.price?.toLocaleString() || 0 }}

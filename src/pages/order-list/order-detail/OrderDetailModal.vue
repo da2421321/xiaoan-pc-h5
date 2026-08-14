@@ -378,6 +378,16 @@ const trajectoryList = ref<TrajectoryItem[]>([])
 const trajectoryLoading = ref(false)
 const trajectoryExpanded = ref(false)
 
+// H5 订单轨迹不展示费用增补及工单调整金额产生的记录。
+// 该接口同时返回后台工单流转记录，需在展示前剔除，避免操作人信息一并透出。
+const shouldHideTrajectory = (item: TrajectoryItem) => {
+  const text = [item.content, item.remark, item.hfRemark]
+    .filter(Boolean)
+    .join(' ')
+
+  return /新增增补项|增补费用|费用补充|补充费用|工单操作人|调整金额|金额调整/.test(text)
+}
+
 // 根据展开状态显示轨迹列表
 const displayTrajectoryList = computed(() => {
   if (trajectoryExpanded.value) {
@@ -448,8 +458,7 @@ const loadTrajectory = async (id: number | string) => {
   try {
     const res = await getOrderWorkflow(String(id))
     const data = res.data || []
-    // 直接倒置数组
-    trajectoryList.value = data.reverse()
+    trajectoryList.value = data.filter((item: TrajectoryItem) => !shouldHideTrajectory(item)).reverse()
   } catch (error) {
     console.error('获取订单轨迹失败:', error)
   } finally {
